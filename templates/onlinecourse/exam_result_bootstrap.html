@@ -22,7 +22,8 @@
           {% endif %}
 
           <p class="lead mt-3 mb-4">
-            Score: <span class="fw-bold">{{ earned }}/{{ total }}</span>
+            Score:
+            <span class="fw-bold">{{ total_score }}/{{ possible_score }}</span>
           </p>
 
           <h2 class="h5">Exam Results</h2>
@@ -36,6 +37,45 @@
             Submitted at:
             <span class="fw-semibold">{{ submission.submitted_at }}</span>
           </p>
+
+          <hr class="my-4" />
+          <h2 class="h5 mb-3">Detailed Results</h2>
+          {% if question_results %}
+          <div class="list-group mb-4">
+            {% for result in question_results %}
+            <div class="list-group-item py-3">
+              <div
+                class="d-flex justify-content-between align-items-start mb-2"
+              >
+                <h3 class="h6 mb-0">
+                  {{ forloop.counter }}. {{ result.question_text }}
+                </h3>
+                {% if result.is_correct %}
+                <span class="badge text-bg-success"
+                  >Correct (+{{ result.grade }})</span
+                >
+                {% else %}
+                <span class="badge text-bg-danger">Incorrect (+0)</span>
+                {% endif %}
+              </div>
+              <p class="mb-1">
+                Your answer:
+                <span class="fw-semibold"
+                  >{% if result.selected_answers %}{{
+                  result.selected_answers|join:", " }}{% else %}No answer
+                  selected{% endif %}</span
+                >
+              </p>
+              <p class="mb-0">
+                Correct answer:
+                <span class="fw-semibold"
+                  >{{ result.correct_answers|join:", " }}</span
+                >
+              </p>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
 
           <div class="mt-4">
             <a

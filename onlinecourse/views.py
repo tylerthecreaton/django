@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.models import User
 
-from .models import Choice, Course, Enrollment, Learner, Submission
+from .models import Choice, Course, Enrollment, Learner, Question, Submission
 
 
 @require_GET
@@ -51,17 +51,54 @@ def show_exam_result(request, course_id, submission_id):
     submission = get_object_or_404(
         Submission, pk=submission_id, enrollment__course=course
     )
-    earned, total = submission.score()
+    selected_choice_ids = set(submission.choices.values_list("id", flat=True))
+    questions = Question.objects.filter(lesson__course=course).prefetch_related(
+        "choices"
+    )
+
+    possible_score = 0
+    total_score = 0
+    question_results = []
+    for question in questions:
+        possible_score += question.grade
+        question_choices = list(question.choices.all())
+        selected_for_question = [
+            choice for choice in question_choices if choice.id in selected_choice_ids
+        ]
+        correct_for_question = [
+            choice for choice in question_choices if choice.is_correct
+        ]
+
+        is_correct = question.is_get_score(selected_choice_ids)
+        if is_correct:
+            total_score += question.grade
+
+        question_results.append(
+            {
+                "question_text": question.question_text,
+                "selected_answers": [
+                    choice.choice_text for choice in selected_for_question
+                ],
+                "correct_answers": [
+                    choice.choice_text for choice in correct_for_question
+                ],
+                "is_correct": is_correct,
+                "grade": question.grade,
+            }
+        )
 
     passed = False
-    if total > 0:
-        passed = (earned / total) >= 0.6
+    if possible_score > 0:
+        passed = (total_score / possible_score) >= 0.6
 
     context = {
         "course": course,
         "submission": submission,
-        "earned": earned,
-        "total": total,
+        "total_score": total_score,
+        "possible_score": possible_score,
+        "earned": total_score,
+        "total": possible_score,
         "passed": passed,
+        "question_results": question_results,
     }
     return render(request, "onlinecourse/exam_result_bootstrap.html", context)

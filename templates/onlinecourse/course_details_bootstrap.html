@@ -52,13 +52,15 @@
             method="post"
             action="{% url 'onlinecourse:submit' course.id %}"
           >
-            {% csrf_token %} {% for lesson in course.lessons.all %} {% for
-            question in lesson.questions.all %}
+            {% csrf_token %} {% if course.lessons.all %} {% for lesson in
+            course.lessons.all %} {% if lesson.questions.all %} {% for question
+            in lesson.questions.all %}
             <div class="mb-4">
               <h3 class="h6">
                 {{ forloop.parentloop.counter }}.{{ forloop.counter }} {{
                 question.question_text }}
               </h3>
+
               {% for choice in question.choices.all %}
               <div class="form-check">
                 <input
@@ -76,11 +78,15 @@
               <p class="text-secondary small mb-0">No choices configured.</p>
               {% endfor %}
             </div>
-            {% endfor %} {% empty %}
+            {% endfor %} {% else %}
+            <p class="text-secondary mb-3">
+              No questions available in this lesson.
+            </p>
+            {% endif %} {% endfor %} {% else %}
             <p class="text-secondary mb-3">
               No lessons or questions available.
             </p>
-            {% endfor %}
+            {% endif %}
 
             <button type="submit" class="btn btn-primary">Submit Exam</button>
           </form>
